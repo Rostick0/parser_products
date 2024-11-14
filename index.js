@@ -87,25 +87,57 @@ function insertProduct(data) {
     });
 
     const data = [];
-    for await (const item of pages.splice(0, 4)) {
+    for await (const item of pages.splice(0, 1)) {
       const page = await browser.newPage();
       try {
         await page.goto(`${item}/properties/`);
 
+        const awaitSelector = ".app-catalog-rxgulu li";
+        await page.waitForSelector(awaitSelector);
+
         data.push(
-          await page.evaluate(async () => ({
-            title: document.querySelector("h1").textContent,
-            // description: document.querySelector(
-            //   'div[data-meta-name="Collapse__content"] div'
-            // )?.innerHTML,
-            images: [
+          await page.evaluate(async () => {
+            const exportsJsonData = (json) => {
+              const decoded = JSON.parse(json);
+
+              return {
+                title: decoded?.name,
+                description: decoded?.description,
+                vendor: decoded?.vendor,
+                price: decoded?.offers?.price,
+              };
+            };
+
+            const images = [
               ...document.querySelectorAll(
                 'div[data-meta-name="ImageGallery__main"] img'
               ),
-            ]?.map((item) => item?.src),
-          }))
+            ]?.map((item) => item?.src);
+
+            const properties = [
+              ...document.querySelectorAll(".app-catalog-rxgulu li"),
+            ].map((item) => ({
+              items: [...item.querySelectorAll("&>div")].map((el) => ({
+                name: el.querySelector("&>*:first-child").textContent?.trim(),
+                value: el.querySelector("&>*:nth-child(2)").textContent?.trim(),
+              })),
+            }));
+
+            return {
+              ...exportsJsonData(
+                document.querySelector('script[type="application/ld+json"]')
+                  .innerHTML
+              ),
+              category: "ноутбуки",
+              is_infinitely: false,
+              images,
+              properties,
+            };
+          })
         );
-      } catch (e) {}
+      } catch (e) {
+        console.error(e);
+      }
 
       // await page.close();
     }
