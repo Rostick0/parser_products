@@ -26,7 +26,7 @@ function insertProduct(data) {
   const awaitSelector = "div[data-meta-name=Pagination__load-more]";
 
   const browser = await puppeteer.launch({
-    // headless: true,
+    headless: true,
     slowMo: 100,
     devtools: true,
     // timeout: 0
@@ -43,6 +43,8 @@ function insertProduct(data) {
     // )
     await page.goto(`${link}`);
     await page.waitForSelector(awaitSelector);
+
+    // document.querySelector('.app-catalog-peotpw.e1mnvjgw0:nth-last-child(2)')
     const pages = await page.evaluate(async () => {
       const links = [];
 
@@ -53,30 +55,9 @@ function insertProduct(data) {
         );
 
         products.forEach((elem) => {
-          // тег ссылки товара
-          // const a = elem.querySelector("a.ProductCardHorizontal__title");
           const title = elem.querySelector(
             "a[data-meta-name=Snippet__title]"
           ).href;
-
-          // const data = {
-          //   // заголовок товара
-          //   title,
-          //   // ссылка товара
-          //   // link: a.href,
-          //   // изображение товара
-          //   // img: elem.querySelector("img.ProductCardHorizontal__image").src,
-          //   // // img: elem.querySelector('img').getAttribute('data-src'),
-          //   // // цена товара
-          //   // price: elem.querySelector(
-          //   //   "span.ProductCardHorizontal__price_current-price"
-          //   // ).textContent,
-          //   // категория
-          //   category: "smartfony",
-          //   // магазин
-          //   shop: "citilink",
-          //   //title, link, img, price, category, shop
-          // };
 
           links.push(title);
         });
@@ -103,7 +84,7 @@ function insertProduct(data) {
               return {
                 title: decoded?.name,
                 description: decoded?.description,
-                vendor: decoded?.vendor,
+                vendor: decoded?.brand,
                 price: decoded?.offers?.price,
               };
             };
@@ -117,6 +98,7 @@ function insertProduct(data) {
             const properties = [
               ...document.querySelectorAll(".app-catalog-rxgulu li"),
             ].map((item) => ({
+              title: item.querySelector("h4").textContent,
               items: [...item.querySelectorAll("&>div")].map((el) => ({
                 name: el.querySelector("&>*:first-child").textContent?.trim(),
                 value: el.querySelector("&>*:nth-child(2)").textContent?.trim(),
@@ -139,7 +121,7 @@ function insertProduct(data) {
         console.error(e);
       }
 
-      // await page.close();
+      await page.close();
     }
 
     // const html = pages.forEach(async (item) => {
@@ -153,7 +135,7 @@ function insertProduct(data) {
     //   querySQL += insertProduct(elem);
     // });
 
-    fs.writeFile("data.json", JSON.stringify(data), (err) => {
+    fs.writeFile("dist/data.json", JSON.stringify(data), (err) => {
       if (err) console.log(err);
     });
 
@@ -164,7 +146,7 @@ function insertProduct(data) {
     console.error(e);
   }
 
-  // await browser.close();
+  await browser.close();
 })();
 
 // dns
